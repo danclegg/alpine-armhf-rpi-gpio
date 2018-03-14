@@ -1,6 +1,6 @@
-version: 2
+version:    2
 jobs:
-  build:
+  one:
     docker:
       - image: danclegg/alpine-armhf-rpi-gpio:$CIRCLE_SHA1 .
     steps:
@@ -10,3 +10,9 @@ jobs:
       - run: apk --no-cache add mosquitto mosquitto-clients
       - attach_workspace:
         - at: /usr/sbin/mosquitto
+workflows:
+  version:  2
+  all_jobs:
+    jobs:
+      - one
+
