@@ -2,7 +2,7 @@ version:    2
 jobs:
   one:
     docker:
-      - image: danclegg/alpine-armhf-rpi-gpio:$CIRCLE_SHA1 .
+      - image: danclegg/alpine-armhf-rpi-gpio:$CIRCLE_SHA1
     steps:
       - checkout
       - run: apk update
@@ -15,4 +15,3 @@ workflows:
   all_jobs:
     jobs:
       - one
-
