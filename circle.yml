@@ -6,11 +6,9 @@ machine:
 
 dependencies:
     pre:
-        - rm -rf ~/*
 
 test:
     override:
-        - go test -v -race $(go list ./... | grep -v /vendor/)
 
 deployment:
     production:
