@@ -1,21 +1,23 @@
-machine:
-    pre:
-    services:
-        - docker
+version: 2
+jobs:
+  build:
+    docker:
+      - image: danclegg/alpine-armhf-rpi-gpio:$CIRCLE_SHA1 .
+    steps:
+      - checkout
+      - run: apk update
+      - run: apk upgrade
+      - run: apk --no-cache add mosquitto mosquitto-clients
+      - attach_workspace:
+        - at: /usr/sbin/mosquitto
+  build:
+    docker:
+      - image: danclegg/alpine-armhf-rpi-gpio:latest .
+    steps:
+      - checkout
+      - run: apk update
+      - run: apk upgrade
+      - run: apk --no-cache add mosquitto mosquitto-clients
+      - attach_workspace:
+        - at: /usr/sbin/mosquitto
 
-dependencies:
-    pre:
-
-test:
-    override:
-
-deployment:
-    production:
-        branch: master
-        commands:
-            - docker build -t danclegg/alpine-armhf-rpi-gpio:$CIRCLE_SHA1 .
-            - docker build -t alpine-armhf-rpi-gpio:latest .
-            - docker login -e $DOCKER_EMAIL -u $DOCKER_USERNAME -p $DOCKER_PASSWORD
-            - docker push danclegg/alpine-armhf-rpi-gpio:$CIRCLE_SHA1
-            - docker push danclegg/alpine-armhf-rpi-gpio:latest
-            - ./deploy.sh $CIRCLE_PROJECT_REPONAME $CIRCLE_SHA1
