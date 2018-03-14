@@ -5,6 +5,7 @@ jobs:
     docker:
       - image: armhf/alpine:latest
     working_directory: ~/alpine
+    parallelism: 4
     steps:
       - checkout
       - save_cache:
