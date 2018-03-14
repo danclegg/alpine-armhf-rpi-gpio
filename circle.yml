@@ -1,11 +1,72 @@
-version: 2
+version:               2
+
 jobs:
-  build:
+  checkout_code:
     docker:
-      - image: armhf/alpine:latest
-      - entrypoint: /usr/sbin/mosquitto
+      - image:         armhf/alpine:latest
+    working_directory: ~/alpine
     steps:
       - checkout
-      - run: apk update
-      - run: apk upgrade
-      - run: apk --no-cache add mosquitto mosquitto-clients
+      - save_cache:
+          key:         v1-repo-{{ .Environment.CIRCLE_SHA1 }}
+          paths:
+            - ~/alpine
+  precompile_assets:
+    docker:
+      - image:         armhf/alpine:latest
+    working_directory: ~/alpine
+    steps:
+      - restore_cache:
+          key:         v1-repo-{{ .Environment.CIRCLE_SHA1 }}
+      - restore_cache:
+          key:         v1-bundle-{{ checksum "Gemfile.lock" }}
+      - run:           bundle --path vendor/bundle
+      - run:
+          name:        Precompile assets
+          command:     bundle exec rake assets:precompile
+      - save_cache:
+          key:         v1-assets-{{ .Environment.CIRCLE_SHA1 }}
+          paths:
+            - ~/alpine/public/assets
+
+  deploy:
+    machine:
+        enabled:       true
+    working_directory: ~/alpine
+    environment:
+      - DOCKER_EMAIL:  $DOCKER_EMAIL
+      - DOCKER_PASSWORD: $DOCKER_PASSWORD
+      - DOCKER_USERNAME: $DOCKER_USERNAME
+    steps:
+      - restore_cache:
+          key:         v1-repo-{{ .Environment.CIRCLE_SHA1 }}
+      - restore_cache:
+          key:         v1-bundle-{{ checksum "Gemfile.lock" }}
+      - restore_cache:
+          key:         v1-assets-{{ .Environment.CIRCLE_SHA1 }}
+      - run:
+          name:        Build SHA1
+          command:     docker build -t danclegg/alpine-armhf-rpi-gpio:{{ .Environment.CIRCLE_SHA1 }} .
+      - run:
+          name:        Build latest
+          command:     docker build -t danclegg/alpine-armhf-rpi-gpio:latest .
+      - run:
+          name:        Docker login
+          command:     docker login -e {{ .Environment.DOCKER_EMAIL }} -u {{ .Environment.DOCKER_USERNAME }} -p {{ .Environment.DOCKER_PASSWORD }}
+      - run:
+          name:        Push SHA1
+          command:     docker push danclegg/alpine-armhf-rpi-gpio:{{ .Environment.CIRCLE_SHA1 }}
+      - run:
+          name:        Push latest
+          command:     docker push danclegg/alpine-armhf-rpi-gpio:latest
+workflows:
+  version:             2
+  build-and-deploy:
+    jobs:
+      - checkout_code
+      - precompile_assets:
+          requires:
+            - checkout_code
+      - deploy:
+          requires:
+            - precompile_assets
