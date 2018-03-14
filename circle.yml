@@ -1,0 +1,24 @@
+machine:
+    pre:
+        - printenv > /tmp/environment-variables-circle
+    services:
+        - docker
+
+dependencies:
+    pre:
+        - rm -rf ~/*
+
+test:
+    override:
+        - go test -v -race $(go list ./... | grep -v /vendor/)
+
+deployment:
+    production:
+        branch: master
+        commands:
+            - docker build -t danclegg/alpine-armhf-rpi-gpio:$CIRCLE_SHA1 .
+            - docker build -t alpine-armhf-rpi-gpio:latest .
+            - docker login -e $DOCKER_EMAIL -u $DOCKER_USERNAME -p $DOCKER_PASSWORD
+            - docker push danclegg/alpine-armhf-rpi-gpio:$CIRCLE_SHA1
+            - docker push danclegg/alpine-armhf-rpi-gpio:latest
+            - ./deploy.sh $CIRCLE_PROJECT_REPONAME $CIRCLE_SHA1
