@@ -1,6 +1,5 @@
 machine:
     pre:
-        - printenv > /tmp/environment-variables-circle
     services:
         - docker
 
