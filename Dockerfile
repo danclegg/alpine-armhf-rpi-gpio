@@ -1,4 +1,4 @@
-FROM alpine:LATEST
+FROM armhf/alpine:latest
 LABEL Maintainer="Dan Clegg <doublegdesigns@gmail.com> " \
       Description="Lightweight Mosquitto MQTT server based on Alpine Linux."
 
